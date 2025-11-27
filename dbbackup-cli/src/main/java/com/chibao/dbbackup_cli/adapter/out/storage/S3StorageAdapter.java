@@ -7,10 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * S3 Storage Adapter
@@ -139,6 +143,8 @@ public class S3StorageAdapter implements StoragePort {
 
     /**
      * Multipart upload for large files
+     *
+     * Properly handles byte buffer and uses correct S3 API
      */
     private String multipartUpload(UploadRequest request, String objectKey) throws IOException {
         log.info("Starting S3 multipart upload: key={}, size={} bytes",
@@ -166,16 +172,23 @@ public class S3StorageAdapter implements StoragePort {
             InputStream inputStream = request.getData();
 
             while ((bytesRead = inputStream.read(buffer)) > 0) {
+
+                // Create byte array with actual bytes read (important!)
+                byte[] partData = java.util.Arrays.copyOf(buffer, bytesRead);
+
+                // Build upload part request with RequestBody
                 UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
                         .bucket(bucketName)
                         .key(objectKey)
                         .uploadId(uploadId)
                         .partNumber(partNumber)
+                        .contentLength((long) bytesRead)  // Important for S3
                         .build();
 
+                // ✅ CORRECT: uploadPart() takes request + RequestBody separately
                 UploadPartResponse uploadPartResponse = s3Client.uploadPart(
                         uploadPartRequest,
-                        RequestBody.fromBytes(buffer, 0, bytesRead)
+                        RequestBody.fromBytes(partData)
                 );
 
                 CompletedPart part = CompletedPart.builder()
@@ -189,6 +202,11 @@ public class S3StorageAdapter implements StoragePort {
                         partNumber, bytesRead, uploadPartResponse.eTag());
 
                 partNumber++;
+            }
+
+            // Validate at least one part uploaded
+            if (completedParts.isEmpty()) {
+                throw new StorageException("No parts uploaded - file may be empty");
             }
 
             // 3. Complete multipart upload
@@ -212,15 +230,21 @@ public class S3StorageAdapter implements StoragePort {
             // Abort multipart upload on failure
             log.error("Multipart upload failed, aborting: uploadId={}", uploadId, e);
 
-            AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
-                    .bucket(bucketName)
-                    .key(objectKey)
-                    .uploadId(uploadId)
-                    .build();
+            try {
+                AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
+                        .bucket(bucketName)
+                        .key(objectKey)
+                        .uploadId(uploadId)
+                        .build();
 
-            s3Client.abortMultipartUpload(abortRequest);
+                s3Client.abortMultipartUpload(abortRequest);
+                log.info("Aborted multipart upload: uploadId={}", uploadId);
 
-            throw e;
+            } catch (Exception abortException) {
+                log.error("Failed to abort multipart upload: uploadId={}", uploadId, abortException);
+            }
+
+            throw new StorageException("Multipart upload failed", e);
         }
     }
 
