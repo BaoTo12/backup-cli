@@ -3,13 +3,15 @@ package com.chibao.dbbackup_cli.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
-import javax.swing.plaf.synth.Region;
 import java.net.URI;
 
 /**
  * Application Configuration
- *
  * Wires all dependencies together.
  * Configures factories for auto-discovery of adapters.
  */
@@ -19,7 +21,6 @@ public class AdapterConfig {
 
     /**
      * S3 Client Bean
-     *
      * Configured for AWS S3 or MinIO (S3-compatible)
      */
     @Bean

@@ -1,37 +1,17 @@
 package com.chibao.dbbackup_cli.domain.port.in;
 
-import lombok.Builder;
-import lombok.Value;
+import com.chibao.dbbackup_cli.domain.model.Backup;
 
 import java.util.List;
 
 /**
- * INBOUND PORT: List Backups Use Case
+ * Inbound Port for listing historical backups.
  */
 public interface ListBackupsUseCase {
 
-    List<BackupInfo> execute(ListBackupsQuery query);
-
-    @Value
-    @Builder
-    class ListBackupsQuery {
-        String databaseName;
-        String databaseType;
-        Integer limit;
-
-        @Builder.Default
-        boolean includeExpired = false;
-    }
-
-    @Value
-    @Builder
-    class BackupInfo {
-        String id;
-        String databaseName;
-        String databaseType;
-        String status;
-        long sizeBytes;
-        String createdAt;
-        String storageLocation;
-    }
+    /**
+     * Retrieves a list of all backup records.
+     * @return A list of Backup objects.
+     */
+    List<Backup> getAllBackups();
 }

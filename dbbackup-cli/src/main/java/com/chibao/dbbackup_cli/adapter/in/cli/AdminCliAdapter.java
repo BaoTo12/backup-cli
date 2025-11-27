@@ -1,10 +1,43 @@
 package com.chibao.dbbackup_cli.adapter.in.cli;
 
+import com.chibao.dbbackup_cli.domain.port.in.TestConnectionUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellOption;
 
 @ShellComponent
-class AdminCliAdapter {
+@RequiredArgsConstructor
+public class AdminCliAdapter {
+
+    private final TestConnectionUseCase testConnectionUseCase;
+
+    @ShellMethod(value = "Test database connection.", key = "test-connection")
+    public String testConnection(
+            @ShellOption(help = "Database type (e.g., postgres, mysql, mongodb)") String databaseType,
+            @ShellOption(help = "Database host") String host,
+            @ShellOption(help = "Database port") int port,
+            @ShellOption(help = "Database name") String database,
+            @ShellOption(help = "Username for database connection") String username,
+            @ShellOption(help = "Password for database connection", value = {"--password", "-p"}) String password
+    ) {
+        TestConnectionUseCase.TestConnectionCommand command = TestConnectionUseCase.TestConnectionCommand.builder()
+                .databaseType(databaseType)
+                .host(host)
+                .port(port)
+                .database(database)
+                .username(username)
+                .password(password)
+                .build();
+
+        TestConnectionUseCase.TestConnectionResult result = testConnectionUseCase.testConnection(command);
+
+        if (result.isSuccess()) {
+            return String.format("✅ Connection successful! (took %dms)", result.getDurationMs());
+        } else {
+            return String.format("❌ %s (took %dms)", result.getMessage(), result.getDurationMs());
+        }
+    }
 
     @ShellMethod(value = "Display version", key = "version")
     public String version() {

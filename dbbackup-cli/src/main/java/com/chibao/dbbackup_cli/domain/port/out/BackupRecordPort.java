@@ -1,6 +1,8 @@
 package com.chibao.dbbackup_cli.domain.port.out;
 
 import com.chibao.dbbackup_cli.domain.model.Backup;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Outbound port for persisting Backup entity records.
@@ -15,4 +17,18 @@ public interface BackupRecordPort {
      * @return The saved Backup entity.
      */
     Backup save(Backup backup);
+
+    /**
+     * Retrieves all backup records.
+     *
+     * @return A list of all backups.
+     */
+    List<Backup> findAll();
+
+    /**
+     * Finds a backup record by its ID.
+     * @param backupId The ID of the backup.
+     * @return An Optional containing the backup if found.
+     */
+    Optional<Backup> findById(String backupId);
 }

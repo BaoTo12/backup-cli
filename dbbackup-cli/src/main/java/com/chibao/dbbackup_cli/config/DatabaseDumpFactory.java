@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-class DatabaseDumpFactory {
+public class DatabaseDumpFactory {
 
     // Spring automatically injects ALL beans implementing DatabaseDumpPort
     private final List<DatabaseDumpPort> dumpAdapters;
@@ -66,7 +66,6 @@ class DatabaseDumpFactory {
                     )
             );
         }
-
         return adapter;
     }
 

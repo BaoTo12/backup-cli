@@ -1,6 +1,6 @@
 package com.chibao.dbbackup_cli.domain.service;
 
-
+import com.chibao.dbbackup_cli.config.DatabaseDumpFactory;
 import com.chibao.dbbackup_cli.domain.exception.BackupFailedException;
 import com.chibao.dbbackup_cli.domain.model.Backup;
 import com.chibao.dbbackup_cli.domain.model.BackupStatus;
@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -39,10 +38,9 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 @Slf4j
 public class BackupService implements BackupUseCase {
-
     // ===== OUTBOUND PORTS (Dependencies - Interfaces) =====
 
-    private final DatabaseDumpPort databaseDumpPort;
+    private final DatabaseDumpFactory databaseDumpFactory;
     private final StoragePort storagePort;
     private final ChecksumPort checksumPort;
     private final EncryptionPort encryptionPort;
@@ -83,6 +81,9 @@ public class BackupService implements BackupUseCase {
         try {
             // ===== 1. DUMP DATABASE (via outbound port) =====
             log.debug("Performing database dump: backupId={}", backupId);
+
+            // Get the correct adapter from the factory based on user input
+            DatabaseDumpPort databaseDumpPort = databaseDumpFactory.getAdapter(command.getDatabaseType());
 
             DatabaseDumpPort.DumpConfig dumpConfig = buildDumpConfig(command);
             DatabaseDumpPort.DumpOutput dumpOutput = databaseDumpPort.performDump(dumpConfig);
