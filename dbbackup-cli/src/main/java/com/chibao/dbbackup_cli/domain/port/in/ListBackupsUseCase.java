@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * INBOUND PORT: List Backups Use Case
  */
-interface ListBackupsUseCase {
+public interface ListBackupsUseCase {
 
     List<BackupInfo> execute(ListBackupsQuery query);
 

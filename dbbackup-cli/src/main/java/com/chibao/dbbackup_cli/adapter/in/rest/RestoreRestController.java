@@ -1,8 +1,18 @@
 package com.chibao.dbbackup_cli.adapter.in.rest;
 
+import com.chibao.dbbackup_cli.adapter.in.rest.dto.RestoreRequestDto;
+import com.chibao.dbbackup_cli.adapter.in.rest.dto.RestoreResponseDto;
+import com.chibao.dbbackup_cli.adapter.in.rest.dto.RestoreStatusDto;
+import com.chibao.dbbackup_cli.domain.port.in.RestoreUseCase;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 /**
  * Restore REST Controller
- *
  * INBOUND ADAPTER - REST API for restore operations
  */
 @RestController
@@ -15,9 +25,7 @@ class RestoreRestController {
 
     /**
      * Restore database from backup
-     *
      * POST /api/v1/restores
-     *
      * Example request:
      * {
      *   "backupId": "abc-123",
@@ -76,7 +84,6 @@ class RestoreRestController {
 
     /**
      * Get restore status
-     *
      * GET /api/v1/restores/{restoreId}
      */
     @GetMapping("/{restoreId}")

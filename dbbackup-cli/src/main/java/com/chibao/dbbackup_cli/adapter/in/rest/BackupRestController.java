@@ -1,13 +1,19 @@
 package com.chibao.dbbackup_cli.adapter.in.rest;
 
 
+import com.chibao.dbbackup_cli.adapter.in.rest.dto.*;
+import com.chibao.dbbackup_cli.domain.model.CompressionType;
 import com.chibao.dbbackup_cli.domain.port.in.BackupUseCase;
 import com.chibao.dbbackup_cli.domain.port.in.ListBackupsUseCase;
 import com.chibao.dbbackup_cli.domain.port.in.TestConnectionUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -34,9 +40,7 @@ public class BackupRestController {
 
     /**
      * Create a new backup
-     *
      * POST /api/v1/backups
-     *
      * Example request:
      * {
      *   "databaseType": "postgres",
