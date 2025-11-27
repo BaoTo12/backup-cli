@@ -1,0 +1,37 @@
+# ===== PRODUCTION PROFILE =====
+# These settings override the base application.yml when the 'prod' profile is active.
+
+spring:
+  # In a real production setup, datasource connection details should be
+  # injected securely via environment variables or a configuration service,
+  # not hardcoded. The base application.yml already uses environment variables
+  # like ${SPRING_DATASOURCE_URL}, which is the correct approach for production.
+  # This file primarily overrides other non-sensitive settings.
+  jpa:
+    hibernate:
+      ddl-auto: validate # In prod, schema changes should be managed by migration tools (Flyway, Liquibase), not auto-updated.
+
+# Use a secure and persistent S3 bucket for production backups
+storage:
+  provider: s3
+  s3:
+    bucket: prod-backup-bucket
+    prefix: backups/prod/
+    region: us-east-1
+    # For production, it's critical to use IAM roles for AWS access.
+    # Do not hardcode access-key or secret-key here.
+    access-key: ${AWS_ACCESS_KEY_ID:''} # Read from env var, default to empty
+    secret-key: ${AWS_SECRET_ACCESS_KEY:''} # Read from env var, default to empty
+
+# Use a standard, non-relative path for temporary files in production
+backup:
+  workdir: /var/lib/dbbackup/tmp
+  retention:
+    days: 90 # Longer retention for production backups
+  encrypt:
+    enabled: true # Encryption should be enabled for production
+
+logging:
+  level:
+    root: INFO
+    com.chibao.dbbackup_cli: INFO # Less verbose logging in production

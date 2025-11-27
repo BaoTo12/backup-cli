@@ -12,11 +12,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * BackupService - Core Business Logic
@@ -42,6 +48,7 @@ public class BackupService implements BackupUseCase {
     private final EncryptionPort encryptionPort;
     private final MetadataPort metadataPort;
     private final MetricsPort metricsPort;
+    private final BackupRecordPort backupRecordPort;
 
     /**
      * Execute backup - Main business logic
@@ -65,8 +72,9 @@ public class BackupService implements BackupUseCase {
         log.info("Starting backup: backupId={}, database={}, type={}",
                 backupId, command.getDatabase(), command.getDatabaseType());
 
-        // Create domain entity
+        // Create domain entity and save initial state
         Backup backup = createBackupEntity(backupId, command, startTime);
+        backupRecordPort.save(backup);
 
         Path tempDumpFile = null;
         Path compressedFile = null;
@@ -117,8 +125,9 @@ public class BackupService implements BackupUseCase {
             // Upload metadata alongside backup
             uploadMetadata(metadataPath, backupId);
 
-            // ===== 7. UPDATE DOMAIN ENTITY =====
+            // ===== 7. UPDATE DOMAIN ENTITY AND SAVE =====
             backup = backup.markAsCompleted(checksum, Files.size(finalFile), storageLocation);
+            backupRecordPort.save(backup);
 
             // ===== 8. RECORD METRICS (via outbound port) =====
             long durationMs = backup.getDurationSeconds() * 1000;
@@ -142,6 +151,10 @@ public class BackupService implements BackupUseCase {
 
         } catch (Exception e) {
             log.error("Backup failed: backupId={}, error={}", backupId, e.getMessage(), e);
+
+            // Save failed state to database
+            Backup failedBackup = backup.markAsFailed(e.getMessage());
+            backupRecordPort.save(failedBackup);
 
             // Record failure metrics
             long durationMs = (Instant.now().toEpochMilli() - startTime.toEpochMilli());
@@ -209,19 +222,45 @@ public class BackupService implements BackupUseCase {
         try {
             // For now, assume gzip compression
             // In real implementation, delegate to compression utility
-            Path compressed = Files.createTempFile("backup_", ".tar.gz");
+            Path compressedPath = Files.createTempFile("backup_", ".tar.gz");
 
-            // Simple compression logic (pseudo-code)
-            // In reality, use proper compression library
-            log.debug("Compressing file: {} -> {}", source, compressed);
-
-            // TODO: Implement actual compression
-            Files.copy(source, compressed, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-            return compressed;
-
+            switch (compressionType){
+                case GZIP -> {
+                    compressedPath = Files.createTempFile("backup_", ".gz");
+                    compressGzip(source, compressedPath);
+                    break;
+                }
+                case ZIP -> {
+                    compressedPath = Files.createTempFile("backup_", ".zip");
+                    compressZip(source, compressedPath);
+                    break;
+                }
+                default ->
+                    throw new IllegalArgumentException("Unsupported compression type: " + compressionType);
+            }
+            log.debug("Compressed file: {} -> {}", source, compressedPath);
+            return compressedPath;
         } catch (Exception e) {
             throw new BackupFailedException("Compression failed", e);
+        }
+    }
+    private void compressGzip(Path source, Path target) throws IOException {
+        try (OutputStream fileOut = Files.newOutputStream(target)){
+            GZIPOutputStream gzipOut = new GZIPOutputStream(fileOut);
+            Files.copy(source, gzipOut);
+        }
+    }
+    private void compressZip(Path source, Path target) throws IOException {
+        try (OutputStream fileOut = Files.newOutputStream(target);
+             ZipOutputStream zipOut = new ZipOutputStream(fileOut)) {
+
+            // Zip cần tạo một entry (tên file bên trong file zip)
+            ZipEntry zipEntry = new ZipEntry(source.getFileName().toString());
+            zipOut.putNextEntry(zipEntry);
+
+            Files.copy(source, zipOut);
+
+            zipOut.closeEntry();
         }
     }
 
@@ -229,7 +268,7 @@ public class BackupService implements BackupUseCase {
         // In real implementation, get key from KMS/Vault
         return EncryptionPort.EncryptionConfig.builder()
                 .algorithm("AES-256-GCM")
-                .keyId("backup-encryption-key")
+           // TODO:     .keyId("backup-encryption-key")
                 .build();
     }
 

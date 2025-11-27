@@ -20,7 +20,6 @@ import java.security.SecureRandom;
  * AES-256-GCM Encryption Adapter
  *
  * OUTBOUND ADAPTER - implements EncryptionPort
- *
  * Encrypts/decrypts files using AES-256-GCM algorithm.
  * GCM provides both confidentiality and authenticity.
  */

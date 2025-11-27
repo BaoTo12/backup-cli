@@ -20,9 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * PostgreSQL Database Dump Adapter
- *
  * OUTBOUND ADAPTER - implements DatabaseDumpPort
- *
  * This adapter knows HOW to backup PostgreSQL specifically.
  * Uses pg_dump native tool for best performance and reliability.
  */
@@ -31,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class PostgresDumpAdapter implements DatabaseDumpPort {
 
     private static final int TIMEOUT_SECONDS = 3600; // 1 hour default
-
+    // flow: USE CASE → DatabaseDumpPort → PostgresDumpAdapter → pg_dump binary → file.dump
     @Override
     public DumpOutput performDump(DumpConfig config) {
         log.info("Starting PostgreSQL dump: database={}, host={}",
@@ -39,6 +37,7 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
 
         try {
             // 1. Prepare output file
+            // format file name: {databaseName}_{timestamp}.dump
             Path dumpFile = config.getWorkingDirectory()
                     .resolve(config.getDatabase() + "_" + System.currentTimeMillis() + ".dump");
 
@@ -48,12 +47,19 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
             log.debug("Executing command: {}", String.join(" ", command));
 
             // 3. Execute pg_dump
+            // Tạo một process hệ thống (OS-level) để chạy pg_dump với command đã build từ config.
+            // JDBC không thể dump schema, index, sequence, hay BLOBs chuẩn. Chỉ dùng SELECT, cực kỳ chậm và nguy cơ mất dữ liệu.
             ProcessBuilder processBuilder = new ProcessBuilder(command);
 
             // Set password via environment variable (secure way)
+            // truyền password vào pg_dump một cách bảo mật.
             processBuilder.environment().put("PGPASSWORD", config.getPassword());
 
             // Redirect error stream
+            // gộp stderr vào stdout.
+            // Dễ log: chỉ cần đọc process.getInputStream()
+            // Không bỏ sót lỗi nào từ pg_dump
+            // Nếu không gộp: Bạn phải mở 2 stream (stdout và stderr) → dễ treo (deadlock) nếu buffer stderr đầy.
             processBuilder.redirectErrorStream(true);
 
             // Start process

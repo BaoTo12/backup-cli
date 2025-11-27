@@ -1,0 +1,23 @@
+# ===== DEVELOPMENT PROFILE =====
+# These settings override the base application.yml when the 'dev' profile is active.
+
+spring:
+  # Configure datasource to connect to the local docker container for development
+  datasource:
+    url: jdbc:postgresql://localhost:5432/db_backup_meta
+    username: admin
+    password: secret
+
+# Use local storage for backups during development
+storage:
+  provider: local
+  local:
+    path: ./backups
+
+# Use a local temporary directory for backup processing
+backup:
+  workdir: ./tmp
+
+logging:
+  level:
+    com.chibao.dbbackup_cli: DEBUG

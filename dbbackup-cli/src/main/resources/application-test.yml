@@ -1,0 +1,30 @@
+# ===== TEST PROFILE =====
+# These settings are used when running automated tests.
+
+spring:
+  # For tests, it might be preferable to use an in-memory database like H2
+  # to ensure tests are isolated and fast. However, if testing against a real
+  # database is desired, Testcontainers should be used to spin up a temporary
+  # Postgres instance, and the connection details would be set dynamically.
+  # For now, we'll keep it simple and assume tests can use a local setup if needed.
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: sa
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # Create schema at the start of tests, drop at the end
+
+# Use a temporary, local storage path for test backups
+storage:
+  provider: local
+  local:
+    path: ./test-backups
+
+# Use a temporary directory for test backup processing
+backup:
+  workdir: ./test-tmp
+
+logging:
+  level:
+    com.chibao.dbbackup_cli: DEBUG

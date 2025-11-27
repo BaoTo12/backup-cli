@@ -1,42 +1,64 @@
 package com.chibao.dbbackup_cli.domain.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
-import lombok.With;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-@Value
+@Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "backups")
 public class Backup {
 
-    String id;
-    String databaseType;      // postgres, mysql, mongodb
-    String databaseName;
-    String host;
-    int port;
+    @Id
+    @Column(nullable = false, updatable = false)
+    private String id;
 
-    @With
-    BackupStatus status;
+    @Column(nullable = false)
+    private String databaseType;      // postgres, mysql, mongodb
 
-    Instant createdAt;
-    Instant completedAt;
+    @Column(nullable = false)
+    private String databaseName;
 
-    @With
-    Long sizeBytes;
+    private String host;
+    private int port;
 
-    @With
-    String checksum;          // SHA-256
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BackupStatus status;
 
-    CompressionType compression;
-    boolean encrypted;
+    @Column(nullable = false)
+    private Instant createdAt;
+    private Instant completedAt;
 
-    String storageLocation;   // S3 key, local path, etc.
+    private Long sizeBytes;
 
-    @With
-    Map<String, String> metadata;
+    private String checksum;          // SHA-256
+
+    @Enumerated(EnumType.STRING)
+    private CompressionType compression;
+    private boolean encrypted;
+
+    private String storageLocation;   // S3 key, local path, etc.
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, String> metadata;
 
     // ===== BUSINESS LOGIC (Pure domain logic) =====
 

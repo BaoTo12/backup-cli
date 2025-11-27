@@ -1,0 +1,30 @@
+version: '3.8'
+
+# This file is for local development.
+# It starts only the PostgreSQL database, allowing you to run the
+# application from your IDE.
+
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: dbbackup_postgres_dev
+    ports:
+      # Exposes the PostgreSQL port to your host machine on localhost:5432
+      - "5432:5432"
+    environment:
+      # These values must match the 'dev' profile in application.yml
+      - POSTGRES_DB=db_backup_meta
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      # Persists database data on your local machine
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d db_backup_meta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+    driver: local

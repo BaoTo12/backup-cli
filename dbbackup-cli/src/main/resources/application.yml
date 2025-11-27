@@ -1,14 +1,34 @@
-# Application Configuration
-# ===== SPRING SCHEDULER =====
+
+# ===== SPRING BOOT =====
 spring:
   application:
     name: db-backup-cli
+
+  # ===== DATABASE (for storing backup metadata) =====
+  # Default datasource configuration. For production, these values are
+  # expected to be provided by the environment (e.g., in docker-compose.prod.yml).
+  # For local development, these are overridden in application-dev.yml.
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_backup_meta}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      # Use 'update' as a sensible default. 'validate' is used in prod, 'create-drop' in test.
+      ddl-auto: update
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true # Ensures table/column names are quoted
+
+  # ===== SCHEDULER =====
   task:
     scheduling:
       pool:
         size: 5  # Thread pool size for scheduled tasks
 
-  # Shell configuration
+  # ===== SHELL =====
   shell:
     interactive:
       enabled: true
@@ -16,24 +36,24 @@ spring:
       enabled: true
 
 # ===== STORAGE CONFIGURATION =====
-
 storage:
-  provider: local  # local, s3, minio
+  # Default storage provider. Can be overridden by profiles.
+  provider: local  # Options: local, s3, minio
 
-  # Local storage
+  # Configuration for local file storage
   local:
     path: /var/lib/dbbackup
 
-  # AWS S3
+  # Configuration for AWS S3
   s3:
     bucket: my-backup-bucket
     prefix: backups/
     region: us-east-1
     endpoint: # Leave empty for AWS, set for custom S3-compatible
-    access-key: # Use IAM roles in production
-    secret-key: # Use IAM roles in production
+    access-key: ${AWS_ACCESS_KEY_ID:''}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:''}
 
-  # MinIO (S3-compatible)
+  # Configuration for MinIO (S3-compatible)
   minio:
     endpoint: http://localhost:9000
     bucket: backups
@@ -41,146 +61,72 @@ storage:
     secret-key: minioadmin
 
 # ===== BACKUP CONFIGURATION =====
-
 backup:
-  # Working directory for temporary files
+  # Default working directory for temporary files
   workdir: /tmp/dbbackup
 
-  # Retention policy
+  # Default retention policy
   retention:
     days: 30          # Keep backups for 30 days
     max-count: 100    # Maximum number of backups per database
 
-  # Database connection
+  # Default database connection settings for the backup target
   db:
     connect:
       timeoutMs: 30000  # 30 seconds
 
-  # Advisory lock
+  # Default advisory lock settings
   lock:
     timeoutMs: 60000    # 1 minute
 
-  # Compression
-  compress: GZIP        # GZIP, ZIP, NONE
+  # Default compression settings
+  compress: GZIP        # Options: GZIP, ZIP, NONE
 
-  # Encryption
+  # Default encryption settings
   encrypt:
     enabled: false
     algorithm: AES-256-GCM
     kms:
       keyId: backup-encryption-key
+
+  # Default scheduler settings
   scheduler:
-    enabled: false  # Enable scheduled backups
-    cron: "0 0 2 * * ?"  # Daily at 2 AM
-    # Database configuration format: dbtype:host:port:database:username:password
-    # Example: postgres:localhost:5432:mydb:postgres:secret,mysql:localhost:3306:testdb:root:pass
+    enabled: false
+    cron: "0 0 2 * * ?"
     databases: ""
     storage-provider: local
     compression: GZIP
     encrypt: false
 
+  # Default cleanup settings
   cleanup:
-    enabled: true  # Enable automatic cleanup
-    # Cleanup runs daily at 3 AM
+    enabled: true
 
+  # Default metrics reporting settings
   metrics:
     reporting:
-      enabled: false  # Enable hourly metrics logging
+      enabled: false
 
 # ===== OBSERVABILITY =====
-
 management:
   endpoints:
     web:
       exposure:
         include: health,info,prometheus,metrics
       base-path: /actuator
-
   metrics:
     export:
       prometheus:
         enabled: true
     tags:
       application: ${spring.application.name}
-      environment: ${ENV:dev}
-# ===== LOGGING =====
+      environment: ${spring.profiles.active:default}
 
+# ===== LOGGING =====
 logging:
   level:
     root: INFO
     com.chibao.dbbackup_cli: DEBUG
     software.amazon.awssdk: WARN
-  
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  
-  # JSON logging for production
-  # Use logstash-logback-encoder for structured logging
-
----
-# ===== DEVELOPMENT PROFILE =====
-
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-storage:
-  provider: local
-  local:
-    path: ./backups
-
-backup:
-  workdir: ./tmp
-
-logging:
-  level:
-    com.chibao.dbbackup_cli: DEBUG
-
----
-# ===== PRODUCTION PROFILE =====
-
-spring:
-  config:
-    activate:
-      on-profile: prod
-
-storage:
-  provider: s3
-  s3:
-    bucket: prod-backup-bucket
-    prefix: backups/prod/
-    region: us-east-1
-    # Use IAM roles - no access/secret keys
-
-backup:
-  workdir: /var/lib/dbbackup/tmp
-  retention:
-    days: 90
-  encrypt:
-    enabled: true
-
-logging:
-  level:
-    root: INFO
-    com.chibao.dbbackup_cli: INFO
-
----
-# ===== TEST PROFILE =====
-
-spring:
-  config:
-    activate:
-      on-profile: test
-
-storage:
-  provider: local
-  local:
-    path: ./test-backups
-
-backup:
-  workdir: ./test-tmp
-
-logging:
-  level:
-    com.chibao.dbbackup_cli: DEBUG
