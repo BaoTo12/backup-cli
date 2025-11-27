@@ -7,6 +7,7 @@ import lombok.Value;
 import java.nio.file.Path;
 import java.util.Map;
 
+//"dumping the database" refers to the process of creating a file that contains a full copy of a database's data and structure.
 public interface DatabaseDumpPort {
     // Perform database-specific backup/dump
     DumpOutput performDump(DumpConfig config);

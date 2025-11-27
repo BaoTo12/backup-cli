@@ -31,7 +31,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <!-- Dependency Versions -->
         <spring-shell.version>3.2.0</spring-shell.version>
         <aws-sdk.version>2.21.0</aws-sdk.version>
@@ -40,7 +39,10 @@
     </properties>
 
 	<dependencies>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
 
         <!-- ===== SPRING SHELL (CLI) ===== -->
 

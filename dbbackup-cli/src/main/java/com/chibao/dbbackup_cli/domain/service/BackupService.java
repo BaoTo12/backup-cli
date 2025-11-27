@@ -20,16 +20,13 @@ import java.util.UUID;
 
 /**
  * BackupService - Core Business Logic
- *
  * Implements INBOUND PORT (BackupUseCase)
  * Depends on OUTBOUND PORTS (interfaces, not implementations)
- *
  * This is the heart of the application - pure business logic
  * with NO knowledge of:
  * - How database dumps are performed (PostgreSQL? MySQL?)
  * - Where files are stored (S3? Local?)
  * - How encryption works (AES? RSA?)
- *
  * All external concerns are abstracted behind ports (interfaces).
  */
 @Service
@@ -48,7 +45,6 @@ public class BackupService implements BackupUseCase {
 
     /**
      * Execute backup - Main business logic
-     *
      * Flow:
      * 1. Initialize backup entity
      * 2. Dump database via port

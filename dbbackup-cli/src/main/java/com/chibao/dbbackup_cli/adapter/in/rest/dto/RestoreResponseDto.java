@@ -9,23 +9,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BackupResponseDto {
+public class RestoreResponseDto {
 
     private String backupId;
     private boolean success;
     private String message;
-
-    // Metadata (only if success)
-    private String storageLocation;
-    private Long sizeBytes;
-    private String checksum;
     private Long durationMs;
 
-    public static BackupResponseDto error(String backupId, String message) {
-        return BackupResponseDto.builder()
+    public static RestoreResponseDto error(String backupId, String message) {
+        return RestoreResponseDto.builder()
                 .backupId(backupId)
                 .success(false)
                 .message(message)
+                .durationMs(0L)
                 .build();
     }
 }

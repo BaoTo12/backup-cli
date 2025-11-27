@@ -1,8 +1,13 @@
 # Application Configuration
+# ===== SPRING SCHEDULER =====
 spring:
   application:
     name: db-backup-cli
-  
+  task:
+    scheduling:
+      pool:
+        size: 5  # Thread pool size for scheduled tasks
+
   # Shell configuration
   shell:
     interactive:
@@ -11,13 +16,14 @@ spring:
       enabled: true
 
 # ===== STORAGE CONFIGURATION =====
+
 storage:
   provider: local  # local, s3, minio
-  
+
   # Local storage
   local:
     path: /var/lib/dbbackup
-  
+
   # AWS S3
   s3:
     bucket: my-backup-bucket
@@ -26,7 +32,7 @@ storage:
     endpoint: # Leave empty for AWS, set for custom S3-compatible
     access-key: # Use IAM roles in production
     secret-key: # Use IAM roles in production
-  
+
   # MinIO (S3-compatible)
   minio:
     endpoint: http://localhost:9000
@@ -39,30 +45,47 @@ storage:
 backup:
   # Working directory for temporary files
   workdir: /tmp/dbbackup
-  
+
   # Retention policy
   retention:
     days: 30          # Keep backups for 30 days
     max-count: 100    # Maximum number of backups per database
-  
+
   # Database connection
   db:
     connect:
       timeoutMs: 30000  # 30 seconds
-  
+
   # Advisory lock
   lock:
     timeoutMs: 60000    # 1 minute
-  
+
   # Compression
   compress: GZIP        # GZIP, ZIP, NONE
-  
+
   # Encryption
   encrypt:
     enabled: false
     algorithm: AES-256-GCM
     kms:
       keyId: backup-encryption-key
+  scheduler:
+    enabled: false  # Enable scheduled backups
+    cron: "0 0 2 * * ?"  # Daily at 2 AM
+    # Database configuration format: dbtype:host:port:database:username:password
+    # Example: postgres:localhost:5432:mydb:postgres:secret,mysql:localhost:3306:testdb:root:pass
+    databases: ""
+    storage-provider: local
+    compression: GZIP
+    encrypt: false
+
+  cleanup:
+    enabled: true  # Enable automatic cleanup
+    # Cleanup runs daily at 3 AM
+
+  metrics:
+    reporting:
+      enabled: false  # Enable hourly metrics logging
 
 # ===== OBSERVABILITY =====
 
@@ -72,7 +95,7 @@ management:
       exposure:
         include: health,info,prometheus,metrics
       base-path: /actuator
-  
+
   metrics:
     export:
       prometheus:
@@ -80,7 +103,6 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${ENV:dev}
-
 # ===== LOGGING =====
 
 logging:

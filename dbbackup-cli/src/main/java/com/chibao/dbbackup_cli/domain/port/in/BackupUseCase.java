@@ -9,7 +9,6 @@ import java.util.Map;
 
 /**
  * INBOUND PORT: Backup Use Case
- *
  * Interface mà application core CUNG CẤP cho bên ngoài.
  * Được IMPLEMENT bởi BackupService (domain/service).
  * Được SỬ DỤNG bởi adapters (CLI, REST, Scheduler).
