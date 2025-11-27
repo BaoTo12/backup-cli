@@ -42,7 +42,7 @@ public class BackupCliAdapter {
     @ShellMethod(value = "Backup a database", key = "backup")
     public String backup(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
                          @ShellOption(help = "Database host") String host,
-                         @ShellOption(help = "Database port", defaultValue = "5432") int port,
+                         @ShellOption(help = "Database port") int port,
                          @ShellOption(help = "Database name") String database,
                          @ShellOption(help = "Username") String username,
                          @ShellOption(help = "Password") String password,
