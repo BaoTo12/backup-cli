@@ -3,6 +3,7 @@ package com.chibao.dbbackup_cli.adapter.out.storage;
 import com.chibao.dbbackup_cli.domain.exception.StorageException;
 import com.chibao.dbbackup_cli.domain.port.out.StoragePort;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
