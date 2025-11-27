@@ -6,7 +6,7 @@ import lombok.Value;
 /**
  * INBOUND PORT: Test Connection Use Case
  */
-interface TestConnectionUseCase {
+public interface TestConnectionUseCase {
 
     ConnectionTestResult execute(ConnectionTestCommand command);
 

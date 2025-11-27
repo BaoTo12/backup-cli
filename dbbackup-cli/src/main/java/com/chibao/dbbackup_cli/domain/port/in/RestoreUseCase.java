@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * INBOUND PORT: Restore Use Case
  */
-interface RestoreUseCase {
+public interface RestoreUseCase {
 
     RestoreResult execute(RestoreCommand command);
 
