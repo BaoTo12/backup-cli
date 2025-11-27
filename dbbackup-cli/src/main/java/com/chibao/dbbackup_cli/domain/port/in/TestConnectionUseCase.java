@@ -1,6 +1,5 @@
 package com.chibao.dbbackup_cli.domain.port.in;
 
-import com.chibao.dbbackup_cli.domain.model.DatabaseConfig;
 import lombok.Builder;
 import lombok.Value;
 

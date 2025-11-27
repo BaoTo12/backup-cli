@@ -3,6 +3,8 @@ package com.chibao.dbbackup_cli.domain.port.in;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.List;
+
 /**
  * Inbound Port for restoring a database from a backup.
  */
@@ -14,6 +16,8 @@ public interface RestoreUseCase {
     @Builder
     class RestoreCommand {
         String backupId;
+        boolean skipIfExists;
+        List<String> tables;
 
         // Target database connection details
         String targetHost;
@@ -26,6 +30,7 @@ public interface RestoreUseCase {
     @Value
     @Builder
     class RestoreResult {
+        String backupId;
         boolean success;
         String message;
         long durationMs;

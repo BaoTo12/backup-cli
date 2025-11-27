@@ -30,7 +30,7 @@ public class TestConnectionService implements TestConnectionUseCase {
 
             // 2. Create the database config for the port
             DatabaseConfig dbConfig = DatabaseConfig.builder()
-                    .databaseType(command.getDatabaseType())
+                    .type(command.getDatabaseType())
                     .host(command.getHost())
                     .port(command.getPort())
                     .database(command.getDatabase())

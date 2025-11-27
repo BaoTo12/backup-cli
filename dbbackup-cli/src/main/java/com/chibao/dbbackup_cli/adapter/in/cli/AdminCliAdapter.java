@@ -21,6 +21,7 @@ public class AdminCliAdapter {
             @ShellOption(help = "Username for database connection") String username,
             @ShellOption(help = "Password for database connection", value = {"--password", "-p"}) String password
     ) {
+        // The adapter is responsible for mapping external input to the domain's command object.
         TestConnectionUseCase.TestConnectionCommand command = TestConnectionUseCase.TestConnectionCommand.builder()
                 .databaseType(databaseType)
                 .host(host)

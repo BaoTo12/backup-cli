@@ -74,6 +74,7 @@ public class RestoreService implements RestoreUseCase {
                     .targetDatabase(command.getTargetDatabase())
                     .username(command.getUsername())
                     .password(command.getPassword())
+                    .tables(command.getTables())
                     .build();
 
             databaseDumpPort.performRestore(restoreInput);
@@ -81,6 +82,7 @@ public class RestoreService implements RestoreUseCase {
 
             long durationMs = Duration.between(startTime, Instant.now()).toMillis();
             return RestoreResult.builder()
+                    .backupId(command.getBackupId())
                     .success(true)
                     .message("Restore completed successfully.")
                     .durationMs(durationMs)
@@ -90,6 +92,7 @@ public class RestoreService implements RestoreUseCase {
             long durationMs = Duration.between(startTime, Instant.now()).toMillis();
             log.error("Restore failed: {}", e.getMessage(), e);
             return RestoreResult.builder()
+                    .backupId(command.getBackupId())
                     .success(false)
                     .message("Restore failed: " + e.getMessage())
                     .durationMs(durationMs)

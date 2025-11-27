@@ -132,31 +132,31 @@ public class BackupCliAdapter {
 
         try {
             // Convert CLI args → Domain command
-            TestConnectionUseCase.ConnectionTestCommand command = TestConnectionUseCase.ConnectionTestCommand.builder().databaseType(dbType.toLowerCase()).host(host).port(port).database(database).username(username).password(password).build();
+            TestConnectionUseCase.TestConnectionCommand command = TestConnectionUseCase.TestConnectionCommand.builder()
+                    .databaseType(dbType.toLowerCase())
+                    .host(host)
+                    .port(port)
+                    .database(database)
+                    .username(username)
+                    .password(password)
+                    .build();
 
             // Execute use case
-            TestConnectionUseCase.ConnectionTestResult result = testConnectionUseCase.execute(command);
+            TestConnectionUseCase.TestConnectionResult result = testConnectionUseCase.testConnection(command);
 
             // Format output
             if (result.isSuccess()) {
-                return String.format("✅ Connection successful!%n" + "Database: %s@%s:%d/%s%n" + "Version: %s%n" + "Response time: %d ms%n" + "Message: %s", username, host, port, database, result.getDatabaseVersion(), result.getResponseTimeMs(), result.getMessage());
+                return String.format("✅ Connection successful!%n" +
+                        "Response time: %d ms%n" +
+                        "Message: %s", result.getDurationMs(), result.getMessage());
             } else {
-                return String.format("❌ Connection failed!%n" + "Database: %s@%s:%d/%s%n" + "Error: %s", username, host, port, database, result.getMessage());
+                return String.format("❌ Connection failed!%n" +
+                        "Error: %s", result.getMessage());
             }
 
         } catch (Exception e) {
             return String.format("❌ Error: %s", e.getMessage());
         }
-    }
-
-    /**
-     * List backups command
-     */
-    @ShellMethod(value = "List backups", key = "list-backups")
-    public String listBackups(@ShellOption(help = "Database name filter", defaultValue = ShellOption.NULL) String database,
-                              @ShellOption(help = "Database type filter", defaultValue = ShellOption.NULL) String dbType,
-                              @ShellOption(help = "Limit results", defaultValue = "10") int limit) {
-        return "📋 List backups feature coming soon...";
     }
 
     // ===== PRIVATE HELPER METHODS =====

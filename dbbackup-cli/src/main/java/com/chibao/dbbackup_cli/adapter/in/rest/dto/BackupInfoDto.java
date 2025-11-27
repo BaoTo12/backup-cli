@@ -1,21 +1,22 @@
 package com.chibao.dbbackup_cli.adapter.in.rest.dto;
 
-import lombok.AllArgsConstructor;
+import com.chibao.dbbackup_cli.domain.model.BackupStatus;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
-@Data
+import java.time.Instant;
+
+/**
+ * DTO for representing backup information in REST API responses.
+ */
+@Value
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class BackupInfoDto {
-    private String id;
-    private String databaseName;
-    private String databaseType;
-    private String status;
-    private Long sizeBytes;
-    private String createdAt;
-    private String storageLocation;
+    String id;
+    String databaseName;
+    String databaseType;
+    BackupStatus status;
+    Long sizeBytes;
+    Instant createdAt;
+    String storageLocation;
 }
-
