@@ -1,4 +1,8 @@
 package com.chibao.dbbackup_cli.domain.port.in;
 
-public class RestoreUseCase {
+import com.chibao.dbbackup_cli.domain.port.in.dto.RestoreCommand;
+import com.chibao.dbbackup_cli.domain.port.in.dto.RestoreResult;
+
+public interface RestoreUseCase {
+    RestoreResult execute(RestoreCommand command);
 }

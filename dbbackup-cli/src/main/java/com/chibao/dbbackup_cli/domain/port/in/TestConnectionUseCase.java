@@ -1,4 +1,8 @@
 package com.chibao.dbbackup_cli.domain.port.in;
 
-public class TestConnectionUseCase {
+import com.chibao.dbbackup_cli.domain.port.in.dto.ConnectionTestCommand;
+import com.chibao.dbbackup_cli.domain.port.in.dto.ConnectionTestResult;
+
+public interface TestConnectionUseCase {
+    ConnectionTestResult execute(ConnectionTestCommand command);
 }
