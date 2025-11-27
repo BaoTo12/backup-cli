@@ -1,1 +1,164 @@
-spring.application.name=dbbackup-cli
+# Application Configuration
+spring:
+  application:
+    name: db-backup-cli
+  
+  # Shell configuration
+  shell:
+    interactive:
+      enabled: true
+    noninteractive:
+      enabled: true
+
+# ===== STORAGE CONFIGURATION =====
+storage:
+  provider: local  # local, s3, minio
+  
+  # Local storage
+  local:
+    path: /var/lib/dbbackup
+  
+  # AWS S3
+  s3:
+    bucket: my-backup-bucket
+    prefix: backups/
+    region: us-east-1
+    endpoint: # Leave empty for AWS, set for custom S3-compatible
+    access-key: # Use IAM roles in production
+    secret-key: # Use IAM roles in production
+  
+  # MinIO (S3-compatible)
+  minio:
+    endpoint: http://localhost:9000
+    bucket: backups
+    access-key: minioadmin
+    secret-key: minioadmin
+
+# ===== BACKUP CONFIGURATION =====
+
+backup:
+  # Working directory for temporary files
+  workdir: /tmp/dbbackup
+  
+  # Retention policy
+  retention:
+    days: 30          # Keep backups for 30 days
+    max-count: 100    # Maximum number of backups per database
+  
+  # Database connection
+  db:
+    connect:
+      timeoutMs: 30000  # 30 seconds
+  
+  # Advisory lock
+  lock:
+    timeoutMs: 60000    # 1 minute
+  
+  # Compression
+  compress: GZIP        # GZIP, ZIP, NONE
+  
+  # Encryption
+  encrypt:
+    enabled: false
+    algorithm: AES-256-GCM
+    kms:
+      keyId: backup-encryption-key
+
+# ===== OBSERVABILITY =====
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENV:dev}
+
+# ===== LOGGING =====
+
+logging:
+  level:
+    root: INFO
+    com.chibao.dbbackup_cli: DEBUG
+    software.amazon.awssdk: WARN
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  
+  # JSON logging for production
+  # Use logstash-logback-encoder for structured logging
+
+---
+# ===== DEVELOPMENT PROFILE =====
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+storage:
+  provider: local
+  local:
+    path: ./backups
+
+backup:
+  workdir: ./tmp
+
+logging:
+  level:
+    com.chibao.dbbackup_cli: DEBUG
+
+---
+# ===== PRODUCTION PROFILE =====
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+storage:
+  provider: s3
+  s3:
+    bucket: prod-backup-bucket
+    prefix: backups/prod/
+    region: us-east-1
+    # Use IAM roles - no access/secret keys
+
+backup:
+  workdir: /var/lib/dbbackup/tmp
+  retention:
+    days: 90
+  encrypt:
+    enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.chibao.dbbackup_cli: INFO
+
+---
+# ===== TEST PROFILE =====
+
+spring:
+  config:
+    activate:
+      on-profile: test
+
+storage:
+  provider: local
+  local:
+    path: ./test-backups
+
+backup:
+  workdir: ./test-tmp
+
+logging:
+  level:
+    com.chibao.dbbackup_cli: DEBUG
