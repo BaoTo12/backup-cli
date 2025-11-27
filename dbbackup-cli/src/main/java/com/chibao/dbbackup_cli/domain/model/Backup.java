@@ -8,10 +8,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-
 @Value
 @Builder(toBuilder = true)
-public class BackUp {
+public class Backup {
+
     String id;
     String databaseType;      // postgres, mysql, mongodb
     String databaseName;
@@ -38,9 +38,11 @@ public class BackUp {
     @With
     Map<String, String> metadata;
 
-    // ? BUSINESS LOGIC (Pure domain logic)
+    // ===== BUSINESS LOGIC (Pure domain logic) =====
 
-    // Check if backup is expired based on retention policy
+    /**
+     * Check if backup is expired based on retention policy
+     */
     public boolean isExpired(int retentionDays) {
         if (createdAt == null) {
             return false;
@@ -49,8 +51,10 @@ public class BackUp {
         return Instant.now().isAfter(expirationDate);
     }
 
-    // Mark backup as completed with metadata
-    public BackUp markAsCompleted(String checksum, long sizeBytes, String storageLocation) {
+    /**
+     * Mark backup as completed with metadata
+     */
+    public Backup markAsCompleted(String checksum, long sizeBytes, String storageLocation) {
         return this.toBuilder()
                 .status(BackupStatus.COMPLETED)
                 .completedAt(Instant.now())
@@ -60,8 +64,10 @@ public class BackUp {
                 .build();
     }
 
-    // Mark backup as failed
-    public BackUp markAsFailed(String errorMessage) {
+    /**
+     * Mark backup as failed
+     */
+    public Backup markAsFailed(String errorMessage) {
         return this.toBuilder()
                 .status(BackupStatus.FAILED)
                 .completedAt(Instant.now())
@@ -69,6 +75,9 @@ public class BackUp {
                 .build();
     }
 
+    /**
+     * Get duration in seconds
+     */
     public long getDurationSeconds() {
         if (createdAt == null || completedAt == null) {
             return 0;
@@ -76,12 +85,16 @@ public class BackUp {
         return ChronoUnit.SECONDS.between(createdAt, completedAt);
     }
 
-    // Check if backup is in progress
+    /**
+     * Check if backup is in progress
+     */
     public boolean isInProgress() {
         return status == BackupStatus.IN_PROGRESS;
     }
 
-    // Check if backup is successful
+    /**
+     * Check if backup is successful
+     */
     public boolean isSuccessful() {
         return status == BackupStatus.COMPLETED;
     }
