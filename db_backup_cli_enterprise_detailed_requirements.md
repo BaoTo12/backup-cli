@@ -263,10 +263,3 @@ This document defines precise behaviors, config keys, file formats, CLI flags, A
 
 ---
 
-## 14. Appendices (Example Configs & Snippets)
-> See appendix files (Dockerfile, docker-compose.yml, example Kubernetes CronJob manifest, sample `application.yml`, sample GitHub Actions YAML, sample Logback JSON config, example Prometheus alert rule). These are included as separate files in the repository under `/deploy/examples/`.
-
----
-
-*Document prepared to be developer- and operator-ready. If you want, I can now generate the example files referenced in Appendix 14 (Dockerfile, docker-compose, k8s CronJob, GitHub Actions workflow, Logback JSON, Prometheus rules, Grafana dashboard JSON). Which one should I create first?*
-

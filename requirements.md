@@ -14,14 +14,14 @@ This project is a **command-line interface (CLI) tool** for backing up and resto
 
 2. **Backup Operations**
    - Full backups (initial version).
-   - Optional incremental and differential backups.
+   - incremental and differential backups.
    - Compress backup files (ZIP/GZIP).
    - Timestamped filenames for versioning.
    - Store backups locally or upload to cloud storage.
 
 3. **Restore Operations**
    - Restore from backup files.
-   - Optional selective restoration for tables or collections.
+   - selective restoration for tables or collections.
    - Validate restore success.
 
 4. **Storage Options**
@@ -30,7 +30,7 @@ This project is a **command-line interface (CLI) tool** for backing up and resto
 
 5. **Logging & Notifications**
    - Log all backup and restore operations: start/end times, status, duration, errors.
-   - Optional Slack notifications for success/failure.
+   - Slack notifications for success/failure.
 
 6. **Automation & Scheduling**
    - Periodic backups via Spring Boot Scheduler (`@Scheduled`) or OS-level cron/Task Scheduler.
@@ -67,7 +67,7 @@ backup-cli status --log /backups/logs/backup.log
 | JSON Handling | **Jackson** | For config, logging, and cloud metadata. |
 | Unit & Integration Testing | **JUnit 5 + Mockito + Spring Boot Test** | Test DB connections, backup/restore logic, and cloud integration. |
 | Dependency Management & Build | **Maven or Gradle** | Handles project dependencies and builds executable JAR. |
-| Optional CLI Enhancements | **JLine / Picocli** | For colored output, progress bars, interactive prompts. |
+| CLI Enhancements | **JLine / Picocli** | For colored output, progress bars, interactive prompts. |
 
 **Architecture Overview:**
 ```
