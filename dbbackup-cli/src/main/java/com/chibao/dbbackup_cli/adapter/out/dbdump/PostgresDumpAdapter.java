@@ -4,6 +4,7 @@ import com.chibao.dbbackup_cli.domain.exception.BackupFailedException;
 import com.chibao.dbbackup_cli.domain.model.DatabaseConfig;
 import com.chibao.dbbackup_cli.domain.port.out.DatabaseDumpPort;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -27,6 +28,12 @@ import java.util.concurrent.TimeUnit;
 @Component("postgresDump")
 @Slf4j
 public class PostgresDumpAdapter implements DatabaseDumpPort {
+
+    @Value("${postgres.pgdump-path:pg_dump}")
+    private String pgDumpPath;
+
+    @Value("${postgres.pgrestore-path:pg_restore}")
+    private String pgRestorePath;
 
     private static final int TIMEOUT_SECONDS = 3600; // 1 hour default
     // flow: USE CASE → DatabaseDumpPort → PostgresDumpAdapter → pg_dump binary → file.dump
@@ -206,10 +213,10 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
     /**
      * Build pg_dump command with options
      */
-    private List<String> buildPgDumpCommand(DumpConfig config, Path outputFile) {
+        private List<String> buildPgDumpCommand(DumpConfig config, Path outputFile) {
         List<String> command = new ArrayList<>();
 
-        command.add("pg_dump");
+        command.add(pgDumpPath);
         command.add("-h");
         command.add(config.getHost());
         command.add("-p");
@@ -250,7 +257,7 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
     private List<String> buildPgRestoreCommand(RestoreInput input) {
         List<String> command = new ArrayList<>();
 
-        command.add("pg_restore");
+        command.add(pgRestorePath);
         command.add("-h");
         command.add(input.getTargetHost());
         command.add("-p");
@@ -287,7 +294,7 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
      */
     private String getPgDumpVersion() {
         try {
-            Process process = new ProcessBuilder("pg_dump", "--version").start();
+            Process process = new ProcessBuilder(pgDumpPath, "--version").start();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()))) {
                 return reader.readLine();

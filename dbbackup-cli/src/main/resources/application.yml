@@ -1,3 +1,5 @@
+server:
+  port: 8975
 # ===== SPRING BOOT =====
 spring:
   application:
@@ -129,3 +131,10 @@ logging:
     software.amazon.awssdk: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ===== DATABASE SPECIFIC CONFIGURATION =====
+# postgres:
+  # Full path to the pg_dump executable.
+  # This is only needed if running from the IDE and pg_dump is not in the system's PATH.
+  # pgdump-path: "C:\\Program Files\\PostgreSQL\\14\\bin\\pg_dump.exe"
+  # pgrestore-path: "C:\\Program Files\\PostgreSQL\\14\\bin\\pg_restore.exe"
