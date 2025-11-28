@@ -10,7 +10,7 @@ spring:
   # expected to be provided by the environment (e.g., in docker-compose-prod.yml).
   # For local development, these are overridden in application-dev.yml.
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_backup_meta}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:6666/db_backup_meta}
     username: ${SPRING_DATASOURCE_USERNAME:admin}
     password: ${SPRING_DATASOURCE_PASSWORD:secret}
     driver-class-name: org.postgresql.Driver
@@ -138,3 +138,7 @@ logging:
   # This is only needed if running from the IDE and pg_dump is not in the system's PATH.
   # pgdump-path: "C:\\Program Files\\PostgreSQL\\14\\bin\\pg_dump.exe"
   # pgrestore-path: "C:\\Program Files\\PostgreSQL\\14\\bin\\pg_restore.exe"
+  #
+  # If running with Docker and you don't want to install tools locally:
+  postgres.pgdump-path: "docker exec -i dbbackup_postgres_test pg_dump"
+  postgres.pgrestore-path: "docker exec -i dbbackup_postgres_test pg_restore"

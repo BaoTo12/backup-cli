@@ -4,7 +4,7 @@
 spring:
   # Configure datasource to connect to the local docker container for development
   datasource:
-    url: jdbc:postgresql://localhost:5432/db_backup_meta
+    url: jdbc:postgresql://localhost:6666/db_backup_meta
     username: admin
     password: secret
 

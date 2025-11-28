@@ -12,9 +12,9 @@ COPY src ./src
 RUN mvn clean install -DskipTests
 
 # Stage 2: Create the final, lightweight image
-FROM eclipse-temurin:17-jre-focal
-# Install PostgreSQL client for pg_dump and pg_restore
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+FROM eclipse-temurin:17-jre-alpine
+# Install PostgreSQL client (Alpine usually has the latest version)
+RUN apk add --no-cache postgresql-client
 # Set the working directory
 WORKDIR /app
 # Copy the executable JAR from the build stage

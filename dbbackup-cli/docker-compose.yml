@@ -3,21 +3,24 @@ services:
     image: postgres:15-alpine3.21
     container_name: postgres-database
     ports:
-      # Exposes the PostgreSQL port to your host machine on localhost:5432
       - "6666:5432"
     environment:
-      # These values must match the 'dev' profile in application.yml
       - POSTGRES_DB=db_backup_meta
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=secret
     volumes:
-      # Persists database data on your local machine
       - postgres_dev_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d db_backup_meta"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
+  dbbackup-cli:
+    build: .
+    container_name: dbbackup-cli-app
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/db_backup_meta
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=secret
+    entrypoint: tail -f /dev/null
 
   postgres_test:
     image: postgres:15-alpine

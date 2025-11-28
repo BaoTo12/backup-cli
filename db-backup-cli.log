@@ -8,3 +8,18 @@
 1764250864845:backup --help
 1764250898073:history
 1764250904094:backup
+1764287129735:test-connection --help
+1764287171151:backup --help
+1764287187473:clear
+1764287524771:version
+1764287533756:help
+1764287539775:backup --help
+1764287582482:backup --db-type mysql --host localhost --port 3306 --database testdb --username root --password secret
+1764287680058:backup --dbType mysql --host localhost --port 3306 --database testdb --username root --password secret
+1764287761687:backup --db-type postgres --host localhost --port 5433 --database testdb --username user --password secret
+1764287769626:backup --dbType postgres --host localhost --port 5433 --database testdb --username user --password secret
+1764320204795:backup --help
+1764320273643:backup --db-type postgres --host localhost --port 5555 --database testdb --username user --password secret
+1764320288703:backup --dbType postgres --host localhost --port 5555 --database testdb --username user --password secret
+1764320972827:pg_dump --version
+1764320980360:backup --dbType postgres --host localhost --port 5555 --database testdb --username user --password secret

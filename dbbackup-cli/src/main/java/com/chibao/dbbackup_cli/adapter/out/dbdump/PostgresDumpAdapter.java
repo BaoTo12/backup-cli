@@ -36,7 +36,9 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
     private String pgRestorePath;
 
     private static final int TIMEOUT_SECONDS = 3600; // 1 hour default
-    // flow: USE CASE → DatabaseDumpPort → PostgresDumpAdapter → pg_dump binary → file.dump
+    // flow: USE CASE → DatabaseDumpPort → PostgresDumpAdapter → pg_dump binary →
+    // file.dump
+
     @Override
     public DumpOutput performDump(DumpConfig config) {
         log.info("Starting PostgreSQL dump: database={}, host={}",
@@ -54,8 +56,10 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
             log.debug("Executing command: {}", String.join(" ", command));
 
             // 3. Execute pg_dump
-            // Tạo một process hệ thống (OS-level) để chạy pg_dump với command đã build từ config.
-            // JDBC không thể dump schema, index, sequence, hay BLOBs chuẩn. Chỉ dùng SELECT, cực kỳ chậm và nguy cơ mất dữ liệu.
+            // Tạo một process hệ thống (OS-level) để chạy pg_dump với command đã build từ
+            // config.
+            // JDBC không thể dump schema, index, sequence, hay BLOBs chuẩn. Chỉ dùng
+            // SELECT, cực kỳ chậm và nguy cơ mất dữ liệu.
             ProcessBuilder processBuilder = new ProcessBuilder(command);
 
             // Set password via environment variable (secure way)
@@ -66,7 +70,8 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
             // gộp stderr vào stdout.
             // Dễ log: chỉ cần đọc process.getInputStream()
             // Không bỏ sót lỗi nào từ pg_dump
-            // Nếu không gộp: Bạn phải mở 2 stream (stdout và stderr) → dễ treo (deadlock) nếu buffer stderr đầy.
+            // Nếu không gộp: Bạn phải mở 2 stream (stdout và stderr) → dễ treo (deadlock)
+            // nếu buffer stderr đầy.
             processBuilder.redirectErrorStream(true);
 
             // Start process
@@ -116,12 +121,16 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
                     .metadata(Map.of(
                             "tool", "pg_dump",
                             "format", "custom",
-                            "version", getPgDumpVersion()
-                    ))
+                            "version", getPgDumpVersion()))
                     .build();
 
         } catch (Exception e) {
             log.error("PostgreSQL dump failed: database={}", config.getDatabase(), e);
+            if (e instanceof java.io.IOException && "pg_dump".equals(pgDumpPath)) {
+                throw new BackupFailedException("PostgreSQL dump failed. 'pg_dump' executable not found in PATH. " +
+                        "If running from IDE, please configure the full path in application.yml, for example: " +
+                        "postgres.pgdump-path: \"C:\\\\Program Files\\\\PostgreSQL\\\\15\\\\bin\\\\pg_dump.exe\"", e);
+            }
             throw new BackupFailedException("PostgreSQL dump failed", e);
         }
     }
@@ -183,16 +192,14 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
                 "jdbc:postgresql://%s:%d/%s",
                 config.getHost(),
                 config.getPort(),
-                config.getDatabase()
-        );
+                config.getDatabase());
 
         log.debug("Testing PostgreSQL connection: {}", url);
 
         try (Connection conn = DriverManager.getConnection(
                 url,
                 config.getUsername(),
-                config.getPassword()
-        )) {
+                config.getPassword())) {
             boolean valid = conn.isValid(5); // 5 seconds timeout
             log.info("PostgreSQL connection test: {} - {}", url, valid ? "SUCCESS" : "FAILED");
             return valid;
@@ -213,10 +220,14 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
     /**
      * Build pg_dump command with options
      */
-        private List<String> buildPgDumpCommand(DumpConfig config, Path outputFile) {
+    private List<String> buildPgDumpCommand(DumpConfig config, Path outputFile) {
         List<String> command = new ArrayList<>();
 
-        command.add(pgDumpPath);
+        // Support multi-word commands (e.g. "docker exec -i container pg_dump")
+        String[] parts = pgDumpPath.split("\\s+");
+        for (String part : parts) {
+            command.add(part);
+        }
         command.add("-h");
         command.add(config.getHost());
         command.add("-p");
@@ -257,7 +268,11 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
     private List<String> buildPgRestoreCommand(RestoreInput input) {
         List<String> command = new ArrayList<>();
 
-        command.add(pgRestorePath);
+        // Support multi-word commands
+        String[] parts = pgRestorePath.split("\\s+");
+        for (String part : parts) {
+            command.add(part);
+        }
         command.add("-h");
         command.add(input.getTargetHost());
         command.add("-p");
@@ -294,7 +309,13 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
      */
     private String getPgDumpVersion() {
         try {
-            Process process = new ProcessBuilder(pgDumpPath, "--version").start();
+            List<String> command = new ArrayList<>();
+            String[] parts = pgDumpPath.split("\\s+");
+            for (String part : parts) {
+                command.add(part);
+            }
+            command.add("--version");
+            Process process = new ProcessBuilder(command).start();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()))) {
                 return reader.readLine();
@@ -305,4 +326,3 @@ public class PostgresDumpAdapter implements DatabaseDumpPort {
         }
     }
 }
-

@@ -37,7 +37,7 @@ public class BackupCliAdapter {
      * * @ShellOption → Định nghĩa tham số CLI.
      * Backup command
      * Example:
-     * backup --db-type postgres --host localhost --port 5432 --database mydb --username postgres --password secret
+     * backup --dbType postgres --host localhost --port 5555 --database testdb --username user --password secret
      */
     @ShellMethod(value = "Backup a database", key = "backup")
     public String backup(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
