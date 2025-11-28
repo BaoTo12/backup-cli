@@ -106,6 +106,18 @@ The application is configured via `application.yml` and environment variables in
 -   **Containerization**: Docker + Docker Compose
 -   **Base Image**: Alpine Linux (Eclipse Temurin JRE 17)
 
+### 🧩 Hexagonal Architecture (Ports & Adapters)
+
+This project follows the **Hexagonal Architecture** pattern to ensure the core domain logic remains independent of external frameworks and tools.
+
+-   **Domain Layer (`domain`)**: Contains the core business logic and entities. It has no dependencies on Spring Boot or external libraries.
+-   **Ports (`domain.port`)**: Interfaces that define how the domain interacts with the outside world.
+    -   **Inbound Ports**: Use Cases (e.g., `BackupUseCase`, `RestoreUseCase`) invoked by the CLI.
+    -   **Outbound Ports**: Interfaces for external services (e.g., `StoragePort`, `DatabaseDumpPort`, `MetricsPort`).
+-   **Adapters (`adapter`)**: Implementations of the ports.
+    -   **Inbound Adapters**: The CLI layer (`BackupCliAdapter`) that drives the application.
+    -   **Outbound Adapters**: Concrete implementations for storage (`LocalStorageAdapter`), database operations (`PostgresDumpAdapter`), and observability (`PrometheusMetricsAdapter`).
+
 ### Directory Structure
 ```
 dbbackup-cli/

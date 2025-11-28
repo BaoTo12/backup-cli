@@ -1,5 +1,6 @@
 package com.chibao.dbbackup_cli.adapter.in.cli;
 
+import com.chibao.dbbackup_cli.adapter.in.cli.service.ConsoleService;
 import com.chibao.dbbackup_cli.domain.model.CompressionType;
 import com.chibao.dbbackup_cli.domain.port.in.BackupUseCase;
 import com.chibao.dbbackup_cli.domain.port.in.RestoreUseCase;
@@ -20,7 +21,8 @@ import java.util.List;
  * Converts CLI args → Domain commands.
  * Formats domain results → CLI output.
  */
-@ShellComponent // --> → Chỉ định class này là một Spring Shell component. Spring sẽ quét và biến nó thành một tập lệnh CLI.
+@ShellComponent // --> → Chỉ định class này là một Spring Shell component. Spring sẽ quét và
+                // biến nó thành một tập lệnh CLI.
 @RequiredArgsConstructor
 public class BackupCliAdapter {
 
@@ -29,6 +31,7 @@ public class BackupCliAdapter {
     private final BackupUseCase backupUseCase;
     private final RestoreUseCase restoreUseCase;
     private final TestConnectionUseCase testConnectionUseCase;
+    private final ConsoleService consoleService;
 
     /**
      * * @ShellMethod → Đánh dấu một method là CLI command.
@@ -37,21 +40,24 @@ public class BackupCliAdapter {
      * * @ShellOption → Định nghĩa tham số CLI.
      * Backup command
      * Example:
-     * backup --dbType postgres --host localhost --port 5555 --database testdb --username user --password secret
+     * backup --dbType postgres --host localhost --port 5555 --database testdb
+     * --username user --password secret
      */
     @ShellMethod(value = "Backup a database", key = "backup")
-    public String backup(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
-                         @ShellOption(help = "Database host") String host,
-                         @ShellOption(help = "Database port") int port,
-                         @ShellOption(help = "Database name") String database,
-                         @ShellOption(help = "Username") String username,
-                         @ShellOption(help = "Password") String password,
-                         @ShellOption(help = "Compression type (NONE, GZIP, ZIP)", defaultValue = "GZIP") String compression,
-                         @ShellOption(help = "Enable encryption", defaultValue = "false") boolean encrypt,
-                         @ShellOption(help = "Storage provider (local, s3, minio)", defaultValue = "local") String storage,
-                         @ShellOption(help = "Tables to backup (comma-separated)", defaultValue = ShellOption.NULL) String tables) {
+    public void backup(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
+            @ShellOption(help = "Database host") String host,
+            @ShellOption(help = "Database port") int port,
+            @ShellOption(help = "Database name") String database,
+            @ShellOption(help = "Username") String username,
+            @ShellOption(help = "Password") String password,
+            @ShellOption(help = "Compression type (NONE, GZIP, ZIP)", defaultValue = "GZIP") String compression,
+            @ShellOption(help = "Enable encryption", defaultValue = "false") boolean encrypt,
+            @ShellOption(help = "Storage provider (local, s3, minio)", defaultValue = "local") String storage,
+            @ShellOption(help = "Tables to backup (comma-separated)", defaultValue = ShellOption.NULL) String tables) {
 
         try {
+            consoleService.animateProgress("Starting backup...");
+
             // Convert CLI args → Domain command
             BackupUseCase.BackupCommand command = BackupUseCase.BackupCommand
                     .builder()
@@ -72,12 +78,12 @@ public class BackupCliAdapter {
 
             // Format output for CLI
             if (result.isSuccess()) {
-                return formatSuccessOutput(result);
+                printSuccessOutput(result);
             } else {
-                return formatFailureOutput(result);
+                printFailureOutput(result);
             }
         } catch (Exception e) {
-            return String.format("❌ Error: %s", e.getMessage());
+            consoleService.printError("Error: " + e.getMessage());
         }
     }
 
@@ -85,34 +91,44 @@ public class BackupCliAdapter {
      * Restore command
      * <p>
      * Example:
-     * restore --backup-id abc123 --host localhost --port 5432 --database mydb --username postgres --password secret
+     * restore --backup-id abc123 --host localhost --port 5432 --database mydb
+     * --username postgres --password secret
      */
     @ShellMethod(value = "Restore a database from backup", key = "restore")
-    public String restore(@ShellOption(help = "Backup ID to restore") String backupId,
-                          @ShellOption(help = "Target database host") String host,
-                          @ShellOption(help = "Target database port", defaultValue = "5432") int port,
-                          @ShellOption(help = "Target database name") String database,
-                          @ShellOption(help = "Username") String username,
-                          @ShellOption(help = "Password") String password,
-                          @ShellOption(help = "Skip if database exists", defaultValue = "false") boolean skipIfExists,
-                          @ShellOption(help = "Tables to restore (comma-separated)", defaultValue = ShellOption.NULL) String tables) {
+    public void restore(@ShellOption(help = "Backup ID to restore") String backupId,
+            @ShellOption(help = "Target database host") String host,
+            @ShellOption(help = "Target database port", defaultValue = "5432") int port,
+            @ShellOption(help = "Target database name") String database,
+            @ShellOption(help = "Username") String username,
+            @ShellOption(help = "Password") String password,
+            @ShellOption(help = "Skip if database exists", defaultValue = "false") boolean skipIfExists,
+            @ShellOption(help = "Tables to restore (comma-separated)", defaultValue = ShellOption.NULL) String tables) {
 
         try {
+            consoleService.animateProgress("Starting restore...");
+
             // Convert CLI args → Domain command
-            RestoreUseCase.RestoreCommand command = RestoreUseCase.RestoreCommand.builder().backupId(backupId).targetHost(host).targetPort(port).targetDatabase(database).username(username).password(password).skipIfExists(skipIfExists).tables(parseTables(tables)).build();
+            RestoreUseCase.RestoreCommand command = RestoreUseCase.RestoreCommand.builder().backupId(backupId)
+                    .targetHost(host).targetPort(port).targetDatabase(database).username(username).password(password)
+                    .skipIfExists(skipIfExists).tables(parseTables(tables)).build();
 
             // Execute use case
             RestoreUseCase.RestoreResult result = restoreUseCase.execute(command);
 
             // Format output
             if (result.isSuccess()) {
-                return String.format("✅ Restore completed successfully!%n" + "Backup ID: %s%n" + "Duration: %d ms%n" + "Message: %s", result.getBackupId(), result.getDurationMs(), result.getMessage());
+                consoleService.printSuccess("Restore completed successfully!");
+                System.out.println(consoleService.formatKey("Backup ID: ") + result.getBackupId());
+                System.out.println(consoleService.formatKey("Duration: ") + result.getDurationMs() + " ms");
+                System.out.println(consoleService.formatKey("Message: ") + result.getMessage());
             } else {
-                return String.format("❌ Restore failed!%n" + "Backup ID: %s%n" + "Error: %s", result.getBackupId(), result.getMessage());
+                consoleService.printError("Restore failed!");
+                System.out.println(consoleService.formatKey("Backup ID: ") + result.getBackupId());
+                System.out.println(consoleService.formatKey("Error: ") + result.getMessage());
             }
 
         } catch (Exception e) {
-            return String.format("❌ Error: %s", e.getMessage());
+            consoleService.printError("Error: " + e.getMessage());
         }
     }
 
@@ -120,17 +136,20 @@ public class BackupCliAdapter {
      * Test database connection
      * <p>
      * Example:
-     * test-connection --db-type postgres --host localhost --port 5432 --database mydb --username postgres --password secret
+     * test-connection --db-type postgres --host localhost --port 5432 --database
+     * mydb --username postgres --password secret
      */
     @ShellMethod(value = "Test database connection", key = "test-connection")
-    public String testConnection(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
-                                 @ShellOption(help = "Database host") String host,
-                                 @ShellOption(help = "Database port", defaultValue = "5432") int port,
-                                 @ShellOption(help = "Database name") String database,
-                                 @ShellOption(help = "Username") String username,
-                                 @ShellOption(help = "Password") String password) {
+    public void testConnection(@ShellOption(help = "Database type (postgres, mysql, mongodb)") String dbType,
+            @ShellOption(help = "Database host") String host,
+            @ShellOption(help = "Database port", defaultValue = "5432") int port,
+            @ShellOption(help = "Database name") String database,
+            @ShellOption(help = "Username") String username,
+            @ShellOption(help = "Password") String password) {
 
         try {
+            consoleService.animateProgress("Testing connection...");
+
             // Convert CLI args → Domain command
             TestConnectionUseCase.TestConnectionCommand command = TestConnectionUseCase.TestConnectionCommand.builder()
                     .databaseType(dbType.toLowerCase())
@@ -146,16 +165,16 @@ public class BackupCliAdapter {
 
             // Format output
             if (result.isSuccess()) {
-                return String.format("✅ Connection successful!%n" +
-                        "Response time: %d ms%n" +
-                        "Message: %s", result.getDurationMs(), result.getMessage());
+                consoleService.printSuccess("Connection successful!");
+                System.out.println(consoleService.formatKey("Response time: ") + result.getDurationMs() + " ms");
+                System.out.println(consoleService.formatKey("Message: ") + result.getMessage());
             } else {
-                return String.format("❌ Connection failed!%n" +
-                        "Error: %s", result.getMessage());
+                consoleService.printError("Connection failed!");
+                System.out.println(consoleService.formatKey("Error: ") + result.getMessage());
             }
 
         } catch (Exception e) {
-            return String.format("❌ Error: %s", e.getMessage());
+            consoleService.printError("Error: " + e.getMessage());
         }
     }
 
@@ -168,14 +187,27 @@ public class BackupCliAdapter {
         return Arrays.stream(tables.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
     }
 
-    private String formatSuccessOutput(BackupUseCase.BackupResult result) {
+    private void printSuccessOutput(BackupUseCase.BackupResult result) {
         BackupUseCase.BackupMetadata metadata = result.getMetadata();
 
-        return String.format("✅ Backup completed successfully!%n" + "%n" + "Backup ID: %s%n" + "Storage Location: %s%n" + "Size: %s%n" + "Checksum (SHA-256): %s%n" + "Duration: %d ms%n" + "%n" + "Message: %s", result.getBackupId(), metadata.getStorageLocation(), formatBytes(metadata.getSizeBytes()), metadata.getChecksum(), metadata.getDurationMs(), result.getMessage());
+        consoleService.printSuccess("Backup completed successfully!");
+        System.out.println();
+        System.out.println(consoleService.formatKey("Backup ID: ") + result.getBackupId());
+        System.out.println(consoleService.formatKey("Storage Location: ") + metadata.getStorageLocation());
+        System.out.println(consoleService.formatKey("Size: ") + formatBytes(metadata.getSizeBytes()));
+        System.out.println(consoleService.formatKey("Checksum (SHA-256): ") + metadata.getChecksum());
+        System.out.println(consoleService.formatKey("Duration: ") + metadata.getDurationMs() + " ms");
+        System.out.println();
+        System.out.println(consoleService.formatKey("Message: ") + result.getMessage());
     }
 
-    private String formatFailureOutput(BackupUseCase.BackupResult result) {
-        return String.format("❌ Backup failed!%n" + "%n" + "Backup ID: %s%n" + "Error: %s%n" + "%n" + "Please check logs for details.", result.getBackupId(), result.getMessage());
+    private void printFailureOutput(BackupUseCase.BackupResult result) {
+        consoleService.printError("Backup failed!");
+        System.out.println();
+        System.out.println(consoleService.formatKey("Backup ID: ") + result.getBackupId());
+        System.out.println(consoleService.formatKey("Error: ") + result.getMessage());
+        System.out.println();
+        consoleService.printWarning("Please check logs for details.");
     }
 
     private String formatBytes(long bytes) {
